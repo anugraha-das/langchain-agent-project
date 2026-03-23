@@ -1,5 +1,3 @@
-from langchain.memory import ConversationBufferMemory
-
 # -----------------------------
 # Shared Memory
 # -----------------------------
@@ -21,12 +19,10 @@ def is_duplicate(text):
 # -----------------------------
 class ResearchAgent:
 
-    def __init__(self):
-        self.memory = ConversationBufferMemory()
-
     def run(self, question):
+
         print("\n==============================")
-        print("\n[Agent-1 | Research Module] Activated...")
+        print("[Agent-1 | Research Module] Activated...")
 
         keywords = [
             "langchain",
@@ -36,7 +32,7 @@ class ResearchAgent:
             "vector store"
         ]
 
-        # Check shared memory
+        # Check shared memory first
         for kw in keywords:
             if kw in question.lower():
                 for item in shared_memory:
@@ -44,7 +40,7 @@ class ResearchAgent:
                         print("[Agent-1] Retrieved from memory.")
                         return item
 
-        # Research logic
+        # Generate new response
         if "langchain" in question.lower():
             result = "LangChain is a framework used to build applications powered by language models with components like chains, agents, and memory."
 
@@ -63,8 +59,7 @@ class ResearchAgent:
         else:
             result = "Information not found. Please ask about LangChain or multi-agent concepts."
 
-        self.memory.save_context({"input": question}, {"output": result})
-
+        # Store in shared memory
         if not is_duplicate(result):
             shared_memory.append(result)
 
@@ -76,16 +71,11 @@ class ResearchAgent:
 # -----------------------------
 class AnalysisAgent:
 
-    def __init__(self):
-        self.memory = ConversationBufferMemory()
-
     def run(self, research_result):
 
         print("\n[Agent-2 | Analysis Module] Activated...")
 
         analysis = research_result
-
-        self.memory.save_context({"input": research_result}, {"output": analysis})
 
         if not is_duplicate(analysis):
             shared_memory.append(analysis)
@@ -98,16 +88,11 @@ class AnalysisAgent:
 # -----------------------------
 class SummarizerAgent:
 
-    def __init__(self):
-        self.memory = ConversationBufferMemory()
-
     def run(self, analysis_result):
 
         print("\n[Agent-3 | Summary Module] Activated...")
 
         summary = analysis_result.split(".")[0]
-
-        self.memory.save_context({"input": analysis_result}, {"output": summary})
 
         if not is_duplicate(summary):
             shared_memory.append(summary)
@@ -134,14 +119,14 @@ while True:
         print("\nSystem shutting down...")
         break
 
+    # Chained Calls
     research_output = research_agent.run(question)
     analysis_output = analysis_agent.run(research_output)
     final_output = summarizer_agent.run(analysis_output)
 
-    # -----------------------------
-    # AI TABLE OUTPUT
-    # -----------------------------
+    # Table Output
     print("\n--------------Agent Output--------------")
+    print("Agent            | Output")
     print("-----------------|-----------------------------------------------")
     print(f"Research Agent   | {research_output}")
     print(f"Analysis Agent   | {analysis_output}")
