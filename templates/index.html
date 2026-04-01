@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Multi-Agent System</title>
+
+<style>
+body{
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:#f4f6f8;
+}
+
+/* Top bar */
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:15px 20px;
+    background:#1a73e8;
+    color:white;
+}
+
+.icons span{
+    margin-left:15px;
+    cursor:pointer;
+    font-size:18px;
+}
+
+/* Container */
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+}
+
+/* Input */
+.input-box{
+    display:flex;
+    gap:10px;
+}
+
+input{
+    flex:1;
+    padding:12px;
+    border-radius:8px;
+    border:1px solid #ccc;
+}
+
+button{
+    padding:12px;
+    border:none;
+    border-radius:8px;
+    background:#1a73e8;
+    color:white;
+    cursor:pointer;
+}
+
+/* Cards */
+.card{
+    background:white;
+    padding:15px;
+    margin-top:15px;
+    border-radius:10px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.1);
+}
+
+.output{
+    white-space:pre-wrap;
+}
+
+/* Email */
+.email{
+    background:#f1f3f4;
+    padding:10px;
+    border-radius:8px;
+    font-family:monospace;
+    white-space:pre-wrap;
+}
+
+/* Memory */
+.memory-box{
+    background:#fafafa;
+    padding:12px;
+    border-radius:8px;
+    font-family:'Courier New', monospace;
+    font-size:14px;
+    line-height:1.6;
+}
+
+/* Dark mode */
+.dark{
+    background:#121212;
+    color:white;
+}
+.dark .card{background:#1e1e1e;}
+.dark .email{background:#2a2a2a;}
+.dark .memory-box{background:#2a2a2a;}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <h2>🤖 Multi-Agent System</h2>
+    <div class="icons">
+        <span onclick="toggleMode()">🌙</span>
+        <span onclick="clearAll()">🧹</span>
+    </div>
+</div>
+
+<div class="container">
+
+<div class="input-box">
+    <input id="query" placeholder="Ask your query...">
+    <button onclick="send()">Run</button>
+</div>
+
+<div class="card">
+<h3>🔍 Research Agent</h3>
+<div id="research" class="output"></div>
+</div>
+
+<div class="card">
+<h3>🧠 Analysis Agent</h3>
+<div id="analysis" class="output"></div>
+</div>
+
+<div class="card">
+<h3>✂️ Summary Agent</h3>
+<div id="summary" class="output"></div>
+</div>
+
+<div class="card">
+<h3>📧 Email</h3>
+<div id="email" class="email"></div>
+</div>
+
+<div class="card">
+<h3>🧠 Memory</h3>
+<div id="memory" class="memory-box"></div>
+</div>
+
+</div>
+
+<script>
+async function send(){
+
+    let q=document.getElementById("query").value;
+
+    let res=await fetch("/process",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({query:q})
+    });
+
+    let data=await res.json();
+
+    document.getElementById("research").innerText=data.research;
+    document.getElementById("analysis").innerText=data.analysis;
+    document.getElementById("summary").innerText=data.summary;
+    document.getElementById("email").innerText=data.email;
+
+    // ✅ Structured Memory with [ ]
+    let memHTML = "";
+
+    // Research
+    memHTML += "<b>Research:</b><br>[<br>";
+    data.memory.research.forEach(item=>{
+        memHTML += "&nbsp;&nbsp;• " + item + "<br>";
+    });
+    memHTML += "]<br><br>";
+
+    // Analysis
+    memHTML += "<b>Analysis:</b><br>[<br>";
+    data.memory.analysis.forEach(item=>{
+        memHTML += "&nbsp;&nbsp;• " + item + "<br>";
+    });
+    memHTML += "]<br><br>";
+
+    // Summary
+    memHTML += "<b>Summary:</b><br>[<br>";
+    data.memory.summary.forEach(item=>{
+        memHTML += "&nbsp;&nbsp;• " + item + "<br>";
+    });
+    memHTML += "]";
+
+    document.getElementById("memory").innerHTML = memHTML;
+}
+
+function toggleMode(){
+    document.body.classList.toggle("dark");
+}
+
+function clearAll(){
+    document.getElementById("query").value="";
+    document.getElementById("research").innerText="";
+    document.getElementById("analysis").innerText="";
+    document.getElementById("summary").innerText="";
+    document.getElementById("email").innerText="";
+    document.getElementById("memory").innerText="";
+}
+</script>
+
+</body>
+</html>
