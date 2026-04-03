@@ -2,102 +2,28 @@
 <html>
 <head>
 <title>Multi-Agent System</title>
-
 <style>
-body{
-    margin:0;
-    font-family:'Segoe UI',sans-serif;
-    background:#f4f6f8;
-}
-
-/* Top bar */
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:15px 20px;
-    background:#1a73e8;
-    color:white;
-}
-
-.icons span{
-    margin-left:15px;
-    cursor:pointer;
-    font-size:18px;
-}
-
-/* Container */
-.container{
-    max-width:900px;
-    margin:auto;
-    padding:20px;
-}
-
-/* Input */
-.input-box{
-    display:flex;
-    gap:10px;
-}
-
-input{
-    flex:1;
-    padding:12px;
-    border-radius:8px;
-    border:1px solid #ccc;
-}
-
-button{
-    padding:12px;
-    border:none;
-    border-radius:8px;
-    background:#1a73e8;
-    color:white;
-    cursor:pointer;
-}
-
-/* Cards */
-.card{
-    background:white;
-    padding:15px;
-    margin-top:15px;
-    border-radius:10px;
-    box-shadow:0 3px 8px rgba(0,0,0,0.1);
-}
-
-.output{
-    white-space:pre-wrap;
-}
-
-/* Email */
-.email{
-    background:#f1f3f4;
-    padding:10px;
-    border-radius:8px;
-    font-family:monospace;
-    white-space:pre-wrap;
-}
-
-/* Memory */
-.memory-box{
-    background:#fafafa;
-    padding:12px;
-    border-radius:8px;
-    font-family:'Courier New', monospace;
-    font-size:14px;
-    line-height:1.6;
-}
-
-/* Dark mode */
-.dark{
-    background:#121212;
-    color:white;
-}
+/* ... (Your original CSS remains exactly the same) ... */
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6f8;}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:#1a73e8;color:white;}
+.icons span{margin-left:15px;cursor:pointer;font-size:18px;}
+.container{max-width:900px;margin:auto;padding:20px;}
+.input-box{display:flex;gap:10px;}
+input{flex:1;padding:12px;border-radius:8px;border:1px solid #ccc;}
+button{padding:12px;border:none;border-radius:8px;background:#1a73e8;color:white;cursor:pointer;}
+.card{background:white;padding:15px;margin-top:15px;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,0.1);}
+.output{white-space:pre-wrap;}
+.email{background:#f1f3f4;padding:10px;border-radius:8px;font-family:monospace;white-space:pre-wrap;}
+.memory-box{background:#fafafa;padding:12px;border-radius:8px;font-family:'Courier New', monospace;font-size:14px;line-height:1.6;}
+.dark{background:#121212;color:white;}
 .dark .card{background:#1e1e1e;}
 .dark .email{background:#2a2a2a;}
 .dark .memory-box{background:#2a2a2a;}
+
+/* New Style for Send Button */
+#send-confirm-btn { background: #34a853; margin-top: 10px; display: none; width: 100%; }
 </style>
 </head>
-
 <body>
 
 <div class="topbar">
@@ -109,7 +35,6 @@ button{
 </div>
 
 <div class="container">
-
 <div class="input-box">
     <input id="query" placeholder="Ask your query...">
     <button onclick="send()">Run</button>
@@ -133,20 +58,19 @@ button{
 <div class="card">
 <h3>📧 Email</h3>
 <div id="email" class="email"></div>
+<button id="send-confirm-btn" onclick="confirmSend()">✔️ Confirm & Send Email</button>
+<p id="send-status" style="color:green; font-weight:bold;"></p>
 </div>
 
 <div class="card">
 <h3>🧠 Memory</h3>
 <div id="memory" class="memory-box"></div>
 </div>
-
 </div>
 
 <script>
 async function send(){
-
     let q=document.getElementById("query").value;
-
     let res=await fetch("/process",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -160,37 +84,39 @@ async function send(){
     document.getElementById("summary").innerText=data.summary;
     document.getElementById("email").innerText=data.email;
 
-    // Structured Memory with [ ]
+    // Show the Send button after processing
+    if(data.email !== "Information not found.") {
+        document.getElementById("send-confirm-btn").style.display = "block";
+    }
+
+    // Structured Memory Logic (Your original logic)
     let memHTML = "";
-
-    // Research
     memHTML += "<b>Research:</b><br>[<br>";
-    data.memory.research.forEach(item=>{
-        memHTML += "&nbsp;&nbsp;• " + item + "<br>";
-    });
+    data.memory.research.forEach(item=>{ memHTML += "&nbsp;&nbsp;• " + item + "<br>"; });
     memHTML += "]<br><br>";
-
-    // Analysis
     memHTML += "<b>Analysis:</b><br>[<br>";
-    data.memory.analysis.forEach(item=>{
-        memHTML += "&nbsp;&nbsp;• " + item + "<br>";
-    });
+    data.memory.analysis.forEach(item=>{ memHTML += "&nbsp;&nbsp;• " + item + "<br>"; });
     memHTML += "]<br><br>";
-
-    // Summary
     memHTML += "<b>Summary:</b><br>[<br>";
-    data.memory.summary.forEach(item=>{
-        memHTML += "&nbsp;&nbsp;• " + item + "<br>";
-    });
+    data.memory.summary.forEach(item=>{ memHTML += "&nbsp;&nbsp;• " + item + "<br>"; });
     memHTML += "]";
-
     document.getElementById("memory").innerHTML = memHTML;
 }
 
-function toggleMode(){
-    document.body.classList.toggle("dark");
+// NEW function for confirmation
+async function confirmSend() {
+    let emailContent = document.getElementById("email").innerText;
+    let res = await fetch("/send-mock", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({email: emailContent})
+    });
+    let data = await res.json();
+    document.getElementById("send-status").innerText = data.message;
+    document.getElementById("send-confirm-btn").style.display = "none";
 }
 
+function toggleMode(){ document.body.classList.toggle("dark"); }
 function clearAll(){
     document.getElementById("query").value="";
     document.getElementById("research").innerText="";
@@ -198,8 +124,9 @@ function clearAll(){
     document.getElementById("summary").innerText="";
     document.getElementById("email").innerText="";
     document.getElementById("memory").innerText="";
+    document.getElementById("send-confirm-btn").style.display = "none";
+    document.getElementById("send-status").innerText = "";
 }
 </script>
-
 </body>
 </html>
