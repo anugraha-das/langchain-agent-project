@@ -1,6 +1,9 @@
 # langchain-agent-project
 "The conductor for your LLM agents. An extensible LangChain-based engine for building, routing, and managing autonomous agentic workflows."
 
+## 📑 Project Documentation
+- [Download Milestone 4 Presentation (PDF)](./docs/Anugraha_PA_Milestone4.pdf)
+- [Technical Architecture Diagram](./assets/architecture.png)
 
 # ___ Agent-Orchestration Framework with LangChain____
 
