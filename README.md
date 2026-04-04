@@ -3,7 +3,7 @@
 
 ## 📑 Project Documentation
 ### 📂 Project Deliverables
-- [ Open Presentation Folder (Download PDF here)](./presentation/)
+- [ Download Milestone 4 Presentation (PDF)](./presentation/Milestone4_Presentation.pdf)
 - [ Open Architecture Assets](./assets/)
  ![Architecture Diagram](./assets/architecture.png)
 # ___ Agent-Orchestration Framework with LangChain____
