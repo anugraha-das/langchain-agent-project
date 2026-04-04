@@ -3,7 +3,6 @@
 
 ## 📑 Project Documentation
 - [Download Milestone 4 Presentation (PDF)](./presentation/agent%20orchestration%20with%20langchain%20ppt.pdf)
-- [Technical Architecture Diagram](./assets/architecture.png)
 
 # ___ Agent-Orchestration Framework with LangChain____
 
