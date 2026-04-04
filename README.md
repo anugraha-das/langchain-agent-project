@@ -2,8 +2,10 @@
 "The conductor for your LLM agents. An extensible LangChain-based engine for building, routing, and managing autonomous agentic workflows."
 
 ## 📑 Project Documentation
-- [ Click here to Download Milestone 4 Presentation (PDF)](https://github.com/anugraha-das/langchain-agent-project/blob/main/presentation/agent%20orchestration%20with%20langchain%20ppt.pdf?raw=true)
-- [ View Technical Architecture Diagram](https://github.com/anugraha-das/langchain-agent-project/blob/main/assets/architecture.png?raw=true)
+### 📂 Project Deliverables
+- [ Open Presentation Folder (Download PDF here)](./presentation/)
+- [ Open Architecture Assets](./assets/)
+ ![Architecture Diagram](./assets/architecture.png)
 # ___ Agent-Orchestration Framework with LangChain____
 
 > **---Infosys Springboard Virtual Internship 6.0 | Project Documentation---**
