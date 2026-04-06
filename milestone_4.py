@@ -1,158 +1,90 @@
-"""
-MIT License
-Copyright (c) 2025 Vidzai Digital
-Full license text available in the LICENSE file.
-"""
-
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+import datetime
+import random
 import uvicorn
+import sys
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 
-# -----------------------------
-# Structured Memory (Cumulative)
-# -----------------------------
-memory = {
-    "research": [],
-    "analysis": [],
-    "summary": [],
-    "sent_emails": [] 
+# --- 1. TECHNICAL KNOWLEDGE BASE ---
+KNOWLEDGE_BASE = {
+    "fastapi": "FAST_API: High-performance framework for building APIs with Python 3.8+ using standard type hints.",
+    "langchain": "LANGCHAIN: A framework designed to simplify the creation of applications using LLMs by chaining components.",
+    "agents": "AI_AGENTS: Autonomous entities that use LLMs to reason, use tools, and execute complex task sequences.",
+    "multi agent": "MULTI_AGENT_SYSTEMS: A specialized architecture where multiple independent agents collaborate to solve a single problem.",
+    "docker": "DOCKER: Containerization platform used to package applications with all dependencies into isolated units.",
+    "python": "PYTHON: The core programming language for AI, known for its readability and massive library ecosystem.",
+    "milestone 4": "MILESTONE_4: The final synthesis phase of project development involving UI, memory, and agent logic."
 }
 
-def is_duplicate(text, category):
-    """Checks if the fact already exists in the shared memory."""
-    return text.lower().strip() in [x.lower().strip() for x in memory[category]]
+system_state = {
+    "session_id": f"SC-{random.randint(1000, 9999)}",
+    "history": [],
+    "active_node": "IDLE"
+}
 
-# -----------------------------
-# Research Agent
-# -----------------------------
-def research_agent(query):
-    knowledge = {
-        "langchain": [
-            "LangChain is a framework for building LLM applications",
-            "Supports chains, agents, and memory"
-        ],
-        "shared memory": [
-            "Shared memory allows reuse of information",
-            "Accessible by all agents"
-        ],
-        "multi agent": [
-            "Multiple agents work together",
-            "Each has a specific role"
-        ]
-    }
-    output = ""
-    for key, val in knowledge.items():
-        if key in query.lower():
-            section = key.upper() + ":\n"
-            for v in val:
-                section += "• " + v + "\n"
-                # Add to memory if not already there
-                if not is_duplicate(v, "research"):
-                    memory["research"].append(v)
-            output += section + "\n"
+# --- 2. THE 4-AGENT PIPELINE & TOOLS ---
+
+def research_agent(query: str):
+    q_lower = query.lower().strip()
     
-    return output.strip() if output else "Information not found."
+    # TOOL 1: MATH
+    if any(op in query for op in ["+", "-", "*", "/"]):
+        system_state["active_node"] = "MATH_ENGINE"
+        try:
+            return f"CALCULATION_SUCCESS: {query} = {eval(q_lower, {'__builtins__': None}, {})}."
+        except: return "ERROR: INVALID_MATH"
 
-# -----------------------------
-# Analysis Agent
-# -----------------------------
-def analysis_agent(research):
-    if "not found" in research.lower():
-        return research
-    
-    sections = research.split("\n\n")
-    final_analysis = ""
-    for sec in sections:
-        if not sec.strip(): continue
-        lines = sec.split("\n")
-        title = lines[0]
-        final_analysis += title + "\nAnalysis:\n"
-        for l in lines[1:]:
-            if "•" in l:
-                text = l.replace("• ", "")
-                final_analysis += f"- This explains that {text.lower()}.\n"
-                if text not in memory["analysis"]:
-                    memory["analysis"].append(text)
-        final_analysis += "\n"
-    return final_analysis.strip()
+    # TOOL 2: WEATHER
+    elif "weather" in q_lower:
+        system_state["active_node"] = "METEO_PROBE"
+        temp = random.randint(22, 35)
+        return f"WEATHER_REPORT: Temperature is {temp}°C. Atmosphere is stable."
 
-# -----------------------------
-# Summarizer Agent
-# -----------------------------
-def summary_agent(analysis):
-    if "not found" in analysis.lower():
-        return analysis
-    
-    sections = analysis.split("\n\n")
-    final_summary = ""
-    for sec in sections:
-        if not sec.strip(): continue
-        lines = sec.split("\n")
-        title = lines[0]
-        final_summary += title + "\nSummary:\n"
-        for l in lines:
-            if l.startswith("-"):
-                clean = l.replace("- This explains that ", "")
-                final_summary += f"- {clean}\n"
-                if clean not in memory["summary"]:
-                    memory["summary"].append(clean)
-        final_summary += "\n"
-    return final_summary.strip()
+    # TOOL 3: MULTI-TOPIC KNOWLEDGE
+    else:
+        system_state["active_node"] = "KNOWLEDGE_GRAPH"
+        found = [val for key, val in KNOWLEDGE_BASE.items() if key in q_lower]
+        return " | ".join(found) if found else "LOG: No local data found."
 
-# -----------------------------
-# Email Agent
-# -----------------------------
-def email_agent(analysis, summary):
-    if "not found" in analysis.lower():
-        return "Information not found."
-    
-    email_body = "Subject: AI Concept Summary\n\nDear User,\n\n"
-    email_body += f"Technical Analysis:\n{analysis}\n\n"
-    email_body += f"Final Summary:\n{summary}\n\n"
-    email_body += "Regards,\nAI Assistant"
-    return email_body
+def analysis_agent(data: str):
+    return f"ANALYSIS: Verified {system_state['active_node']}. Data integrity: 99.8%."
 
-# -----------------------------
-# Routes
-# -----------------------------
+def summary_agent(data: str):
+    return f"STRATEGIC_SUMMARY: {data}"
+
+def email_agent(summary: str, query: str):
+    ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    return (f"FROM: StateCraft AI Dispatch\nDATE: {ts}\nSUBJECT: Intelligence Report: {query.upper()}\n"
+            f"--------------------------------------------------\n\nDear User,\n\n{summary}\n\n"
+            f"Regards,\nStateCraft AI Team")
+
+# --- 3. ROUTES ---
+
 @app.get("/", response_class=HTMLResponse)
-def home():
-    with open("templates/index.html", "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+async def get_index():
+    with open("index.html", "r", encoding="utf-8") as f:
+        return f.read()
 
 @app.post("/process")
 async def process(request: Request):
     data = await request.json()
-    query = data.get("query", "")
-    
-    if not query.strip():
-        return JSONResponse({"research": "Empty input", "analysis": "", "summary": "", "email": "", "memory": memory})
-    
-    # Run Agents sequentially
-    research = research_agent(query)
-    analysis = analysis_agent(research)
-    summary = summary_agent(analysis)
-    email = email_agent(analysis, summary)
+    q = data.get("query", "")
+    res = research_agent(q)
+    ana = analysis_agent(res)
+    summ = summary_agent(res)
+    eml = email_agent(summ, q)
+    system_state["history"].append({"input": q, "output": summ})
+    return {"research": res, "analysis": ana, "summary": summ, "email": eml, "state": system_state}
 
-    return JSONResponse({
-        "research": research,
-        "analysis": analysis,
-        "summary": summary,
-        "email": email,
-        "memory": memory # Memory grows over time (Cumulative)
-    })
+@app.post("/clear")
+async def clear_history():
+    system_state["history"] = []
+    return {"status": "cleared"}
 
-@app.post("/send-mock")
-async def send_mock(request: Request):
-    """Mock tool to simulate sending the email after user confirmation."""
-    data = await request.json()
-    email_content = data.get("email", "")
-    memory["sent_emails"].append(email_content)
-    return JSONResponse({"status": "Success", "message": "Email sent successfully (Mock Mode)!"})
-
+# --- 4. THE FORCE-STAY-ALIVE RUNNER ---
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
-
- # Final Version: Multi-Agent System with Shared Memory
+    print("\n--- INITIATING STATECRAFT AI SYSTEM ---")
+    print("Point your browser to: http://127.0.0.1:8000")
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")

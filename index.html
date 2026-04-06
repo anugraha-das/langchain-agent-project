@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>StateCraft AI | Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #00ffa3; --bg: #0b0f1a; --card: #141b2d; --border: #2d3748; --text: #e2e8f0; }
+        body.light { --bg: #f8fafc; --card: #ffffff; --border: #e2e8f0; --text: #1e293b; }
+        
+        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; transition: 0.3s; overflow: hidden; }
+        
+        /* SIDEBAR / HISTORY */
+        .sidebar { width: 340px; background: rgba(0,0,0,0.3); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .logo { padding: 40px; border-bottom: 1px solid var(--border); }
+        .logo h1 { font-size: 20px; color: var(--primary); margin: 0; letter-spacing: 2px; text-transform: uppercase; }
+        
+        .history { flex: 1; padding: 20px; overflow-y: auto; }
+        .hist-card { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border); font-size: 12px; line-height: 1.4; }
+        .hist-card b { color: var(--primary); display: block; margin-bottom: 5px; }
+
+        /* MAIN WORKSPACE */
+        .workspace { flex: 1; padding: 40px; overflow-y: auto; }
+        .input-bar { display: flex; gap: 15px; background: var(--card); padding: 10px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input { flex: 1; background: transparent; border: none; color: inherit; padding: 15px; font-family: 'JetBrains Mono'; outline: none; font-size: 14px; }
+        .btn-exec { background: var(--primary); color: #000; border: none; padding: 0 35px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-exec:hover { transform: scale(1.05); box-shadow: 0 0 15px var(--primary); }
+
+        /* MOVING BOXES GRID */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { 
+            background: var(--card); border: 1px solid var(--border); padding: 25px; border-radius: 16px; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+        .card:hover { 
+            transform: translateY(-12px) scale(1.02); 
+            border-color: var(--primary); 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
+        }
+
+        .tag { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--primary); text-transform: uppercase; margin-bottom: 15px; display: block; font-weight: bold; }
+        .email-view { background: #010409; padding: 20px; border-radius: 10px; white-space: pre-wrap; font-family: 'JetBrains Mono'; font-size: 13px; color: #8b949e; line-height: 1.6; border-left: 4px solid var(--primary); }
+        
+        .controls { padding: 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        .btn-sm { background: transparent; border: 1px solid var(--border); color: inherit; padding: 10px; border-radius: 6px; cursor: pointer; flex: 1; font-size: 11px; font-weight: bold; transition: 0.2s; }
+        .btn-sm:hover { background: var(--border); }
+    </style>
+</head>
+<body id="main-body">
+
+<div class="sidebar">
+    <div class="logo"><h1>STATECRAFT AI</h1></div>
+    <div class="history" id="hist-list">
+        <p style="text-align: center; color: #484f58; margin-top: 50px;">Memory Unit Standby</p>
+    </div>
+    <div class="controls">
+        <button class="btn-sm" onclick="document.getElementById('main-body').classList.toggle('light')">🌓 THEME</button>
+        <button class="btn-sm" onclick="clearHistory()">🗑️ CLEAR</button>
+    </div>
+</div>
+
+<div class="workspace">
+    <div class="input-bar">
+        <input type="text" id="query" placeholder="Command input... (e.g., 'What is LangChain and Multi Agent?')">
+        <button class="btn-exec" onclick="execute()">EXECUTE</button>
+    </div>
+
+    <div class="grid">
+        <div class="card"><span class="tag">[NODE_01] RESEARCHER</span><div id="res-box">Awaiting handshake...</div></div>
+        <div class="card"><span class="tag">[NODE_02] ANALYST</span><div id="ana-box">...</div></div>
+        <div class="card"><span class="tag">[NODE_03] SUMMARIZER</span><div id="sum-box">...</div></div>
+        <div class="card"><span class="tag">[NODE_04] DISPATCHER</span><div id="eml-box" class="email-view">Pending dispatch...</div></div>
+    </div>
+</div>
+
+<script>
+    async function execute() {
+        const qInput = document.getElementById('query').value;
+        if(!qInput) return;
+
+        const res = await fetch('/process', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({query: qInput})
+        });
+        const data = await res.json();
+
+        // Update Agent Cards
+        document.getElementById('res-box').innerText = data.research;
+        document.getElementById('ana-box').innerText = data.analysis;
+        document.getElementById('sum-box').innerText = data.summary;
+        document.getElementById('eml-box').innerText = data.email;
+
+        // Update History Sidebar
+        const hist = document.getElementById('hist-list');
+        hist.innerHTML = data.state.history.map(item => `
+            <div class="hist-card"><b>Q: ${item.input}</b>${item.output}</div>
+        `).reverse().join('');
+    }
+
+    async function clearHistory() {
+        const res = await fetch('/clear', { method: 'POST' });
+        if(res.ok) {
+            document.getElementById('hist-list').innerHTML = '<p style="text-align: center; color: #484f58; margin-top: 50px;">Memory Cleared</p>';
+        }
+    }
+</script>
+
+</body>
+</html>
