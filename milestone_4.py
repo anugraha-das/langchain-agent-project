@@ -85,6 +85,8 @@ async def clear_history():
 
 # --- 4. THE FORCE-STAY-ALIVE RUNNER ---
 if __name__ == "__main__":
-    print("\n--- INITIATING STATECRAFT AI SYSTEM ---")
-    print("Point your browser to: http://127.0.0.1:8000")
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
+    import uvicorn
+    print("\n--- [STATECRAFT AI] SYSTEM ONLINE ---")
+    print("Direct Link: http://127.0.0.1:8080")
+    
+    uvicorn.run(app, host="127.0.0.1", port=8080)
